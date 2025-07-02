@@ -36,7 +36,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // THIS is the only CORS config you need!
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
