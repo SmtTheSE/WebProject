@@ -1,39 +1,15 @@
 import React, { useState } from "react";
 import sbsPic from "../assets/images/sbs-pic.png";
 import sbsLogo from "../assets/images/sbs-logo.svg";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-regular-svg-icons";
-import axios from "axios";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState(""); // state to hold email input
-  const [password, setPassword] = useState(""); // state to hold password input
-  const [error, setError] = useState(""); // state to show error
-  const navigate = useNavigate();
 
   const togglePassword = () => {
     setShowPassword((prev) => !prev);
-  };
-
-  // Handler for the login button
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    try {
-      const response = await axios.post("http://localhost:8080/api/auth/login", {
-        email,
-        password,
-      });
-      localStorage.setItem("token", response.data.token);
-      navigate("/profile", { state: { loginSuccess: true } });
-    } catch (err) {
-      setError(
-        err?.response?.data?.message ||
-        "Invalid email or password"
-      );
-    }
   };
 
   return (
@@ -55,11 +31,7 @@ const Login = () => {
               Please Log in to access your student portal.
             </p>
 
-            <form className="w-full" onSubmit={handleSubmit}>
-              {/* Show error message if any */}
-              {error && (
-                <div style={{ color: "red", marginBottom: "1em" }}>{error}</div>
-              )}
+            <div className="w-full">
               <label htmlFor="email" className="text-font text-2xl">
                 Email
               </label>
@@ -68,9 +40,6 @@ const Login = () => {
                 id="email"
                 className="w-full p-3 bg-[#F3F3F3] text-font rounded-normal my-3"
                 placeholder="yourexample@sbsedu.uni.vn"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
               />
 
               <label htmlFor="password" className="text-font text-2xl">
@@ -82,9 +51,6 @@ const Login = () => {
                   id="password"
                   className="w-full p-3 bg-[#F3F3F3] text-font rounded-normal my-3 pr-10"
                   placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
                 />
                 <FontAwesomeIcon
                   icon={showPassword ? faEyeSlash : faEye}
@@ -94,13 +60,10 @@ const Login = () => {
               </div>
 
               <Link className="text-font-light block">Forgot password?</Link>
-              <button
-                className="bg-iconic my-10 px-10 py-3 text-white rounded-normal"
-                type="submit"
-              >
+              <button className="bg-iconic my-10 px-10 py-3 text-white rounded-normal">
                 Login
               </button>
-            </form>
+            </div>
           </div>
 
           {/* Guest access */}

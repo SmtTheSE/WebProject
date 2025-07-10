@@ -5,6 +5,7 @@
   --red--: #D92027;
   --light-gray--: #989898;
   --light-gray-1--: #D3D3D3;
+  --light-gray-2--: #F5F5F5;
   --dark-blue--: #002159;
 
 
@@ -12,6 +13,7 @@
   --color-font: var(--dark-blue--);
   --color-font-light: var(--light-gray--);
   --color-border: var(--light-gray-1--);
+  --color-background: var(--light-gray-2--);
 
 
   --radius-normal: 5px;
