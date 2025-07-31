@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
@@ -15,6 +16,9 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @Builder
 public class ClassSchedule {
+
+    @Column(name = "class_date")
+    private LocalDate classDate;
     @Id
     @Column(name = "class_schedule_id", length = 15)
     private String classScheduleId;
@@ -22,6 +26,8 @@ public class ClassSchedule {
     @ManyToOne
     @JoinColumn(name = "study_plan_course_id", nullable = false)
     private StudyPlanCourse studyPlanCourse;
+
+
 
     @Column(name = "day_of_week", nullable = false, length = 15)
     private String dayOfWeek;

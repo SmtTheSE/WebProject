@@ -67,7 +67,7 @@ const ProfilePage = () => {
         const formatted = Object.entries(grouped).map(([day, subjects], index) => ({
           id: index,
           day,
-          date: new Date(),
+          date: new Date(subjects[0].classDate),
           subjects: subjects.map((s, i) => ({
             id: i,
             subject: s.courseName,
@@ -162,7 +162,7 @@ const ProfilePage = () => {
                   <div key={timeline.id} className="grid grid-cols-4 py-5 border-b border-border">
                     <div className="col-span-1">
                       <h1 className="text-font text-2xl">{timeline.day}</h1>
-                      <p className="text-font-light">{timeline.date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                      <p className="text-font-light">{new Date(timeline.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
                     </div>
                     <div className="col-span-3">
                       {!timeline.subjects?.length ? (

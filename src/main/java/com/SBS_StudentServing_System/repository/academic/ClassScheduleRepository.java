@@ -17,6 +17,7 @@ public interface ClassScheduleRepository extends JpaRepository<ClassSchedule, St
     @Query("""
     SELECT new com.SBS_StudentServing_System.dto.academic.ClassTimelineDto(
         cs.classScheduleId,
+        cs.classDate,
         cs.dayOfWeek,
         cs.startTime,
         cs.endTime,
@@ -33,6 +34,7 @@ public interface ClassScheduleRepository extends JpaRepository<ClassSchedule, St
     JOIN StudentEnrollment se ON se.studyPlanCourse = spc
     WHERE se.student.studentId = :studentId
 """)
+
     List<ClassTimelineDto> findClassTimelinesByStudentId(@Param("studentId") String studentId);
 
 
