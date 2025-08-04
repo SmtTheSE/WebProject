@@ -9,6 +9,7 @@ public class StudyPlanCourseDto {
     private String studyPlanCourseId;
     private String studyPlanId;
     private String courseId;
+    private String courseName;
     private String semesterId;
     private LocalDate assignmentDeadline;
 }

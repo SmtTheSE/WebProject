@@ -16,6 +16,7 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [generalInfo, setGeneralInfo] = useState({ paymentStatus: null, totalCredits: null });
   const [classTimeline, setClassTimeline] = useState([]);
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,6 +33,7 @@ const ProfilePage = () => {
         setProfile(res.data);
         fetchGeneralInfo(res.data.studentId);
         fetchClassTimeline(res.data.studentId);
+        fetchAssignmentDeadlines(res.data.studentId);
       })
       .catch(() => navigate("/login"));
   }, []);
@@ -64,22 +66,45 @@ const ProfilePage = () => {
           return acc;
         }, {});
 
-        const formatted = Object.entries(grouped).map(([day, subjects], index) => ({
-          id: index,
-          day,
-          date: new Date(subjects[0].classDate),
-          subjects: subjects.map((s, i) => ({
-            id: i,
-            subject: s.courseName,
-            lecturer: s.lecturerName || "TBD",
-            startTime: s.startTime,
-            endTime: s.endTime,
-          })),
-        }));
+        const weekdaysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+        const formatted = weekdaysOrder.map((day, index) => {
+          const subjects = grouped[day] || [];
+          const sortedSubjects = subjects.sort((a, b) => a.startTime.localeCompare(b.startTime));
+          return {
+            id: index,
+            day,
+            date: sortedSubjects[0] ? new Date(sortedSubjects[0].classDate) : null,
+            subjects: sortedSubjects.map((s, i) => ({
+              id: i,
+              subject: s.courseName,
+              lecturer: s.lecturerName || "TBD",
+              startTime: s.startTime,
+              endTime: s.endTime,
+            })),
+          };
+        }).filter(day => day.subjects.length > 0);
 
         setClassTimeline(formatted);
       })
       .catch(() => setClassTimeline([]));
+  };
+
+  const fetchAssignmentDeadlines = (studentId) => {
+    const token = localStorage.getItem("token");
+    const headers = { Authorization: `Bearer ${token}` };
+
+    axios.get(`http://localhost:8080/api/academic/study-plan-courses/student/${studentId}`, { headers })
+      .then((res) => {
+        const deadlines = res.data.map((item, idx) => ({
+          id: idx,
+          // ✅ Prefer courseName if available
+          name: item.courseName || item.course?.courseName || item.courseId,
+          deadline: new Date(item.assignmentDeadline).toLocaleDateString("en-GB"),
+        }));
+        setUpcomingDeadlines(deadlines);
+      })
+      .catch(() => setUpcomingDeadlines([]));
   };
 
   const otherInfos = [
@@ -96,6 +121,8 @@ const ProfilePage = () => {
       data: generalInfo.totalCredits,
     },
   ];
+
+  const todayDay = new Date().toLocaleDateString("en-US", { weekday: "long" });
 
   return (
     <section>
@@ -161,8 +188,13 @@ const ProfilePage = () => {
                 {classTimeline.map((timeline) => (
                   <div key={timeline.id} className="grid grid-cols-4 py-5 border-b border-border">
                     <div className="col-span-1">
-                      <h1 className="text-font text-2xl">{timeline.day}</h1>
-                      <p className="text-font-light">{new Date(timeline.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                      <div className="flex items-center gap-2">
+                        <h1 className="text-font text-2xl">{timeline.day}</h1>
+                        {timeline.day === todayDay && (
+                          <span className="text-white bg-emerald-600 text-xs font-semibold px-2 py-1 rounded">Today</span>
+                        )}
+                      </div>
+                      <p className="text-font-light">{timeline.date?.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
                     </div>
                     <div className="col-span-3">
                       {!timeline.subjects?.length ? (
@@ -192,6 +224,21 @@ const ProfilePage = () => {
                         </div>
                       )}
                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white p-5 col-span-1 rounded-md">
+              <h1 className="uppercase text-gray-500 text-xl border-b border-font-light pb-5">Upcoming Deadlines</h1>
+              <div>
+                {upcomingDeadlines.map((el) => (
+                  <div key={el.id} className="flex justify-between items-center border-b border-font-light py-3">
+                    <h1 className="flex justify-start items-center gap-2">
+                      <span className="block rounded-full bg-amber-600 w-2 h-2"></span>
+                      {el.name}
+                    </h1>
+                    <p>{el.deadline}</p>
                   </div>
                 ))}
               </div>

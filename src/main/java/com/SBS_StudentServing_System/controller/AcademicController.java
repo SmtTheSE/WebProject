@@ -2,6 +2,7 @@ package com.SBS_StudentServing_System.controller;
 
 import com.SBS_StudentServing_System.dto.academic.ClassScheduleDto;
 import com.SBS_StudentServing_System.dto.academic.ClassTimelineDto;
+import com.SBS_StudentServing_System.dto.academic.StudyPlanCourseDto;
 import com.SBS_StudentServing_System.model.academic.*;
 import com.SBS_StudentServing_System.service.academic.AcademicService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,6 +82,12 @@ public class AcademicController {
     }
 
     // --- StudyPlanCourse ---
+
+    @GetMapping("/study-plan-courses/student/{studentId}")
+    public List<StudyPlanCourseDto> getStudyPlanCoursesByStudent(@PathVariable String studentId) {
+        return academicService.getStudyPlanCoursesByStudent(studentId);
+    }
+
     @GetMapping("/study-plan-courses")
     public List<StudyPlanCourse> getAllStudyPlanCourses() {
         return academicService.getAllStudyPlanCourses();

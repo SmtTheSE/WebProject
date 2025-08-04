@@ -2,6 +2,7 @@ package com.SBS_StudentServing_System.service.academic;
 
 import com.SBS_StudentServing_System.dto.academic.ClassScheduleDto;
 import com.SBS_StudentServing_System.dto.academic.ClassTimelineDto;
+import com.SBS_StudentServing_System.dto.academic.StudyPlanCourseDto;
 import com.SBS_StudentServing_System.model.academic.*;
 import com.SBS_StudentServing_System.repository.academic.*;
 import lombok.AllArgsConstructor;
@@ -75,6 +76,21 @@ public class AcademicService {
     }
 
     // --- StudyPlanCourse ---
+    public List<StudyPlanCourseDto> getStudyPlanCoursesByStudent(String studentId) {
+        List<StudyPlanCourse> courses = studyPlanCourseRepo.findByStudentId(studentId);
+        return courses.stream().map(spc -> {
+            StudyPlanCourseDto dto = new StudyPlanCourseDto();
+            dto.setStudyPlanCourseId(spc.getStudyPlanCourseId());
+            dto.setStudyPlanId(spc.getStudyPlan().getStudyPlanId());
+            dto.setCourseId(spc.getCourse().getCourseId());
+            dto.setCourseName(spc.getCourse().getCourseName());
+            dto.setSemesterId(spc.getSemester().getSemesterId());
+            dto.setAssignmentDeadline(spc.getAssignmentDeadline());
+            return dto;
+        }).toList();
+    }
+
+
     public List<StudyPlanCourse> getAllStudyPlanCourses() {
         return studyPlanCourseRepo.findAll();
     }
