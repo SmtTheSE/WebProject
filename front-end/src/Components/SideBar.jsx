@@ -20,7 +20,7 @@ const SideBar = () => {
       id: 1,
       name: "Home",
       icon: faHome,
-      link: "/academic",
+      link: "/",
       isCurrent: true,
       children: null,
     },
@@ -32,19 +32,25 @@ const SideBar = () => {
       isCurrent: false,
       children: [
         {
+          id: 1,
           name: "Study Plan",
           icon: faRoute,
           link: "",
+          isCurrent: false,
         },
         {
+          id: 2,
           name: "Transcripts",
           icon: faListOl,
-          link: "",
+          link: "transcripts",
+          isCurrent: true,
         },
         {
+          id: 3,
           name: "Attendances",
           icon: faListCheck,
           link: "",
+          isCurrent: false,
         },
       ],
     },
@@ -68,6 +74,15 @@ const SideBar = () => {
     );
   };
 
+  const academicMenuHandler = (id) => {
+    setSideBarMenus((prevMenus) =>
+      prevMenus[1].children.map((menu) =>
+        menu.id === id
+          ? { ...menu, isCurrent: true }
+          : { ...menu, isCurrent: false }
+      )
+    );
+  };
 
   return (
     <nav className="fixed bg-iconic w-80 h-screen flex flex-col justify-start items-start gap-3 p-5">
@@ -115,6 +130,7 @@ const SideBar = () => {
                     key={child.id}
                     to={child.link}
                     className="hover:text-iconic transition-colors duration-200 text-xl py-5"
+                    onClick={academicMenuHandler}
                   >
                     {child.name}
                   </Link>

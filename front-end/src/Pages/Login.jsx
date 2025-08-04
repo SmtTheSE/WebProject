@@ -35,7 +35,7 @@ const Login = () => {
       localStorage.setItem("accountId", accountId);
 
       //  Navigate after login
-      navigate("/profile"); // or navigate("/profile") if that's your profile page
+      navigate("/");
     } catch (err) {
       setError("Invalid email or password");
       console.error("Login error:", err);
