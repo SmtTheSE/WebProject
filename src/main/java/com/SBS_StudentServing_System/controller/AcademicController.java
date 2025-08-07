@@ -2,6 +2,7 @@ package com.SBS_StudentServing_System.controller;
 
 import com.SBS_StudentServing_System.dto.academic.ClassScheduleDto;
 import com.SBS_StudentServing_System.dto.academic.ClassTimelineDto;
+import com.SBS_StudentServing_System.dto.academic.CourseResultDto;
 import com.SBS_StudentServing_System.dto.academic.StudyPlanCourseDto;
 import com.SBS_StudentServing_System.model.academic.*;
 import com.SBS_StudentServing_System.service.academic.AcademicService;
@@ -176,6 +177,11 @@ public class AcademicController {
         academicService.deleteCourse(id);
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/course-results/student/{studentId}")
+    public ResponseEntity<List<CourseResultDto>> getCourseResultsByStudentId(@PathVariable String studentId) {
+        return ResponseEntity.ok(academicService.getCourseResultsByStudentId(studentId));
+    }
+
 
     // --- Semester ---
     @GetMapping("/semesters")

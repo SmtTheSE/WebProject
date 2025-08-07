@@ -2,6 +2,7 @@ package com.SBS_StudentServing_System.service.academic;
 
 import com.SBS_StudentServing_System.dto.academic.ClassScheduleDto;
 import com.SBS_StudentServing_System.dto.academic.ClassTimelineDto;
+import com.SBS_StudentServing_System.dto.academic.CourseResultDto;
 import com.SBS_StudentServing_System.dto.academic.StudyPlanCourseDto;
 import com.SBS_StudentServing_System.model.academic.*;
 import com.SBS_StudentServing_System.repository.academic.*;
@@ -226,6 +227,20 @@ public class AcademicService {
     }
 
     // --- CourseResult ---
+    public List<CourseResultDto> getCourseResultsByStudentId(String studentId) {
+        List<CourseResult> results = courseResultRepo.findAllByStudentId(studentId);
+        return results.stream().map(result -> {
+            CourseResultDto dto = new CourseResultDto();
+            dto.setId(result.getId());
+            dto.setStudentId(result.getStudent().getStudentId());
+            dto.setStudyPlanCourseId(result.getStudyPlanCourse().getStudyPlanCourseId());
+            dto.setGradeName(result.getGrade().getGradeName());
+            dto.setCreditsEarned(result.getCreditsEarned());
+            return dto;
+        }).toList();
+    }
+
+
     public List<CourseResult> getAllCourseResults() {
         return courseResultRepo.findAll();
     }
