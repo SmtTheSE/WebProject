@@ -5,6 +5,7 @@ import ErrorPage from "../Pages/ErrorPage";
 import ProfilePage from "../Pages/ProfilePage";
 import AcademicPage from "../Pages/AcademicPage";
 import Transcripts from "../Pages/Transcripts";
+import StudyPlan from "../Pages/StudyPlan";
 
 const router = createBrowserRouter([
   {
@@ -23,6 +24,10 @@ const router = createBrowserRouter([
       {
         path: "transcripts",
         element: <Transcripts />
+      },
+      {
+        path: "study-plan",
+        element: <StudyPlan />
       }
     ],
   },

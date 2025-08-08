@@ -35,7 +35,7 @@ const SideBar = () => {
           id: 1,
           name: "Study Plan",
           icon: faRoute,
-          link: "",
+          link: "study-plan",
           isCurrent: false,
         },
         {
