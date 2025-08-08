@@ -225,7 +225,7 @@ const StudyPlan = () => {
               {subjPlans
                 .filter((subj) => subj.status === 1)
                 .map((subj) => (
-                  <div className="flex justify-between items-center bg-blue-50 border-l-5 border-border p-3 mb-3">
+                  <div key={subj.id} className="flex justify-between items-center bg-blue-50 border-l-5 border-border p-3 mb-3">
                     <h1>{subj.subject}</h1>
                     <p>
                       <FontAwesomeIcon
