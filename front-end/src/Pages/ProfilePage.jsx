@@ -5,216 +5,240 @@ import Container from "../Components/Container";
 import SubContainer from "../Components/SubContainer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import donePayment from "../assets/icons/done-payment.png";
+import failPayment from "../assets/icons/fail-payment.png";
+import payment from "../assets/icons/payment.png";
+import credit from "../assets/icons/score.png";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
-  // State to store API data
   const [profile, setProfile] = useState(null);
-  const [deadlines, setDeadlines] = useState([]);
-  const [announcements, setAnnouncements] = useState([]);
-  const [classSchedule, setClassSchedule] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [generalInfo, setGeneralInfo] = useState({ paymentStatus: null, totalCredits: null });
+  const [classTimeline, setClassTimeline] = useState([]);
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
   const navigate = useNavigate();
 
-  // Helper: Format date
-  const formatDate = (dateStr) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  // Helper: Format time
-  const formatTime = (dateStr) => {
-    const d = new Date(dateStr);
-    return d.toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  // Fetch data on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      // Redirect to login if not authenticated
       navigate("/login");
       return;
     }
-    // Axios config with JWT
-    const api = axios.create({
-      baseURL: "http://localhost:8080/api/dashboard",
+
+    axios.get("http://localhost:8080/api/profile", {
       headers: { Authorization: `Bearer ${token}` },
-    });
-
-    // Fetch all dashboard data in parallel
-    Promise.all([
-      api.get("/profile"),
-      api.get("/deadlines"),
-      api.get("/announcements"),
-      api.get("/schedule"),
-    ])
-      .then(([profileRes, deadlinesRes, announcementsRes, scheduleRes]) => {
-        setProfile(profileRes.data);
-        setDeadlines(deadlinesRes.data);
-        setAnnouncements(announcementsRes.data);
-        setClassSchedule(scheduleRes.data);
-        setLoading(false);
+    })
+      .then((res) => {
+        setProfile(res.data);
+        fetchGeneralInfo(res.data.studentId);
+        fetchClassTimeline(res.data.studentId);
+        fetchAssignmentDeadlines(res.data.studentId);
       })
-      .catch((err) => {
-        setError(
-          err?.response?.data?.message ||
-            "Failed to load dashboard data. Please try again."
-        );
-        setLoading(false);
-      });
-  }, [navigate]);
+      .catch(() => navigate("/login"));
+  }, []);
 
-  if (loading)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading dashboard...
-      </div>
-    );
-  if (error)
-    return (
-      <div className="flex justify-center items-center h-screen text-red-600">
-        {error}
-      </div>
-    );
+  const fetchGeneralInfo = (studentId) => {
+    const token = localStorage.getItem("token");
+    const headers = { Authorization: `Bearer ${token}` };
+
+    axios.get(`http://localhost:8080/api/tuition-payments/student/${studentId}`, { headers })
+      .then((res) => {
+        const paymentStatus = res.data.some(p => p.paymentStatus === 1) ? 1 : 0;
+        setGeneralInfo(prev => ({ ...prev, paymentStatus }));
+      })
+      .catch(() => setGeneralInfo(prev => ({ ...prev, paymentStatus: 0 })));
+
+    axios.get(`http://localhost:8080/api/academic/course-results/total-credits/${studentId}`, { headers })
+      .then((res) => setGeneralInfo(prev => ({ ...prev, totalCredits: res.data })))
+      .catch(() => setGeneralInfo(prev => ({ ...prev, totalCredits: 0 })));
+  };
+
+  const fetchClassTimeline = (studentId) => {
+    const token = localStorage.getItem("token");
+    const headers = { Authorization: `Bearer ${token}` };
+
+    axios.get(`http://localhost:8080/api/academic/class-timelines/${studentId}`, { headers })
+      .then((res) => {
+        const grouped = res.data.reduce((acc, curr) => {
+          if (!acc[curr.dayOfWeek]) acc[curr.dayOfWeek] = [];
+          acc[curr.dayOfWeek].push(curr);
+          return acc;
+        }, {});
+
+        const weekdaysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+        const formatted = weekdaysOrder.map((day, index) => {
+          const subjects = grouped[day] || [];
+          const sortedSubjects = subjects.sort((a, b) => a.startTime.localeCompare(b.startTime));
+          return {
+            id: index,
+            day,
+            date: sortedSubjects[0] ? new Date(sortedSubjects[0].classDate) : null,
+            subjects: sortedSubjects.map((s, i) => ({
+              id: i,
+              subject: s.courseName,
+              lecturer: s.lecturerName || "TBD",
+              startTime: s.startTime,
+              endTime: s.endTime,
+            })),
+          };
+        }).filter(day => day.subjects.length > 0);
+
+        setClassTimeline(formatted);
+      })
+      .catch(() => setClassTimeline([]));
+  };
+
+  const fetchAssignmentDeadlines = (studentId) => {
+    const token = localStorage.getItem("token");
+    const headers = { Authorization: `Bearer ${token}` };
+
+    axios.get(`http://localhost:8080/api/academic/study-plan-courses/student/${studentId}`, { headers })
+      .then((res) => {
+        const deadlines = res.data.map((item, idx) => ({
+          id: idx,
+          // ✅ Prefer courseName if available
+          name: item.courseName || item.course?.courseName || item.courseId,
+          deadline: new Date(item.assignmentDeadline).toLocaleDateString("en-GB"),
+        }));
+        setUpcomingDeadlines(deadlines);
+      })
+      .catch(() => setUpcomingDeadlines([]));
+  };
+
+  const otherInfos = [
+    {
+      id: 1,
+      name: "Payment",
+      icon: payment,
+      data: generalInfo.paymentStatus,
+    },
+    {
+      id: 2,
+      name: "Total Credits",
+      icon: credit,
+      data: generalInfo.totalCredits,
+    },
+  ];
+
+  const todayDay = new Date().toLocaleDateString("en-US", { weekday: "long" });
 
   return (
     <section>
       <Container>
-        {/* Cover Photo */}
         <div className="h-60 w-full overflow-hidden relative">
-          <img
-            src={defaultCoverPic}
-            alt="Cover Photo"
-            className="object-cover w-full h-full"
-          />
+          <img src={defaultCoverPic} alt="Cover Photo" className="object-cover w-full h-full" />
         </div>
-        {/* Profile Picture */}
-        <div className="left-[50%] translate-x-[50%] tanslate-y-[50%] top-[45%] absolute w-32 h-32 rounded-full border-4 border-white overflow-hidden shadow-md">
-          <img
-            src={defaultProfile}
-            alt="Profile Picture"
-            className="w-full h-full object-cover"
-          />
-        </div>
-
-        {/* Info Section */}
-        <div className="mt-20 flex flex-col items-center justify-center">
-          {profile && (
-            <div className="bg-white px-8 py-6 rounded-md shadow flex flex-wrap justify-center items-center gap-6 text-center">
-              <div className="px-6 border-r border-gray-300">
-                <h1 className="font-bold text-2xl">{profile.accountName}</h1>
-                <h3 className="text-gray-500">{profile.nationality}</h3>
-              </div>
-              <div className="px-6 border-r border-gray-300">
-                <h1 className="font-bold text-2xl">
-                  SBS{profile.studentId}
-                </h1>
-                <h3 className="text-gray-500">Student ID</h3>
-              </div>
-              <div className="px-6 border-r border-gray-300">
-                <h1 className="font-bold text-2xl">
-                  {profile.email}
-                </h1>
-                <h3 className="text-gray-500">Email</h3>
-              </div>
-              <div className="px-6">
-                <h1 className="font-bold text-2xl">{profile.pathway}</h1>
-                <h3 className="text-gray-500">Pathway</h3>
-              </div>
-              <button className="bg-[#0D5EA6] px-4 py-3 text-white rounded-md">
-                Send Message
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* SubContainer */}
         <SubContainer>
-          <div className="grid grid-cols-3 mt-20 gap-3">
+          <div className="flex justify-start items-center gap-5 my-10">
+            <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden shadow-md">
+              <img src={defaultProfile} alt="Profile Picture" className="w-full h-full object-cover" />
+            </div>
+            <div className="flex flex-col items-center justify-center">
+              {profile && (
+                <div key={profile.studentId} className="bg-white px-8 py-6 rounded-md shadow flex flex-wrap justify-center items-center gap-6 text-center">
+                  <div className="px-6 border-r border-gray-300">
+                    <h1 className="font-bold text-2xl">{profile.name}</h1>
+                    <h3 className="text-gray-500">{profile.nativeCountry}</h3>
+                  </div>
+                  <div className="px-6 border-r border-gray-300">
+                    <h1 className="font-bold text-2xl">SBS{profile.studentId}</h1>
+                    <h3 className="text-gray-500">Student ID</h3>
+                  </div>
+                  <div className="px-6 border-r border-gray-300">
+                    <h1 className="font-bold text-2xl">{profile.email}@sbsuni.edu.vn</h1>
+                    <h3 className="text-gray-500">Email</h3>
+                  </div>
+                  <div className="px-6">
+                    <h1 className="font-bold text-2xl">{profile.pathway}</h1>
+                    <h3 className="text-gray-500">Pathway</h3>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 mb-5">
+            {otherInfos.map((otherInfo, index) => (
+              <div key={index} className="bg-white p-5 rounded-xl shadow-sm flex items-center gap-5">
+                <div className="bg-background rounded-full w-20 h-20 overflow-hidden flex items-center justify-center mb-4">
+                  <img src={otherInfo.icon} alt={otherInfo.name} className="w-12 h-12 object-contain" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">{otherInfo.name}</h3>
+                  <p className={
+                    otherInfo.data === 0 ? "text-red-500" :
+                    otherInfo.data === 1 ? "text-green-500" :
+                    "text-font text-2xl"
+                  }>
+                    {otherInfo.data === 0 ? "Not yet" :
+                    otherInfo.data === 1 ? "Completed" :
+                    otherInfo.data}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
             <div className="bg-white p-5 col-span-2 row-span-2 rounded-md">
-              <h1 className="uppercase text-gray-500 text-xl border-b border-font-light pb-5">
-                Class Timeline
-              </h1>
+              <h1 className="uppercase text-gray-500 text-xl border-b border-font-light pb-5">Class Timeline</h1>
               <div>
-                {classSchedule.length === 0 && (
-                  <div className="text-gray-400 mt-4">No schedule available</div>
-                )}
-                {classSchedule.map((cls) => (
-                  <div
-                    key={cls.id}
-                    className="border-b border-font-light py-3 flex flex-col md:flex-row md:justify-between"
-                  >
-                    <div>
-                      <span className="font-bold">{cls.subject}</span>
-                      <span className="text-gray-400 ml-2 text-xs">
-                        ({cls.instructor})
-                      </span>
+                {classTimeline.map((timeline) => (
+                  <div key={timeline.id} className="grid grid-cols-4 py-5 border-b border-border">
+                    <div className="col-span-1">
+                      <div className="flex items-center gap-2">
+                        <h1 className="text-font text-2xl">{timeline.day}</h1>
+                        {timeline.day === todayDay && (
+                          <span className="text-white bg-emerald-600 text-xs font-semibold px-2 py-1 rounded">Today</span>
+                        )}
+                      </div>
+                      <p className="text-font-light">{timeline.date?.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
                     </div>
-                    <div>
-                      <span className="mr-4">
-                        {formatDate(cls.startTime)} {formatTime(cls.startTime)}
-                      </span>
-                      <span className="mr-2">-</span>
-                      <span>
-                        {formatDate(cls.endTime)} {formatTime(cls.endTime)}
-                      </span>
+                    <div className="col-span-3">
+                      {!timeline.subjects?.length ? (
+                        <h1 className="text-2xl text-font">No classes - Enjoy your day off!</h1>
+                      ) : (
+                        <div>
+                          {timeline.subjects.map((sub) => (
+                            <div key={sub.id}>
+                              <div className="flex justify-start items-center">
+                                <div className="w-25">
+                                  <h3>{sub.startTime}</h3>
+                                  <h3>{sub.endTime}</h3>
+                                </div>
+                                <div className="w-full p-5 border-l-5 border-border bg-background">
+                                  <div className="flex justify-between items-center w-full">
+                                    <h1 className="flex items-center gap-3">
+                                      <span className="block rounded-full bg-amber-600 w-2 h-2"></span>
+                                      {sub.subject}
+                                    </h1>
+                                    <h1>{sub.lecturer}</h1>
+                                  </div>
+                                </div>
+                              </div>
+                              <br />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+
             <div className="bg-white p-5 col-span-1 rounded-md">
-              <h1 className="uppercase text-gray-500 text-xl border-b border-font-light pb-5">
-                Upcoming Deadlines
-              </h1>
+              <h1 className="uppercase text-gray-500 text-xl border-b border-font-light pb-5">Upcoming Deadlines</h1>
               <div>
-                {deadlines.length === 0 && (
-                  <div className="text-gray-400 mt-4">No deadlines</div>
-                )}
-                {deadlines.map((el) => (
-                  <div
-                    key={el.id}
-                    className="flex justify-between items-center border-b border-font-light py-3"
-                  >
+                {upcomingDeadlines.map((el) => (
+                  <div key={el.id} className="flex justify-between items-center border-b border-font-light py-3">
                     <h1 className="flex justify-start items-center gap-2">
                       <span className="block rounded-full bg-amber-600 w-2 h-2"></span>
-                      {el.subject}
+                      {el.name}
                     </h1>
-                    <p>{formatDate(el.dueDate)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="bg-white p-5 col-span-1 rounded-md">
-              <h1 className="uppercase text-gray-500 text-xl border-b border-font-light pb-5 mb-5">
-                Announcement
-              </h1>
-              <div className="grid grid-cols-2 gap-3">
-                {announcements.length === 0 && (
-                  <div className="col-span-2 text-gray-400">No announcements</div>
-                )}
-                {announcements.map((el) => (
-                  <div
-                    key={el.id}
-                    className="bg-blue-100 rounded-md p-2"
-                  >
-                    <h3 className="text-font-light mb-2">
-                      {formatDate(el.date)}
-                    </h3>
-                    <div className="flex justify-between items-center">
-                      <h1>{el.title}</h1>
-                      <FontAwesomeIcon icon={faArrowRight} />
-                    </div>
+                    <p>{el.deadline}</p>
                   </div>
                 ))}
               </div>
