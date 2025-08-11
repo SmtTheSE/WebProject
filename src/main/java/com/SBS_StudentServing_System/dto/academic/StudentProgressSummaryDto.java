@@ -6,7 +6,7 @@ import lombok.Data;
 public class StudentProgressSummaryDto {
     private Long id;
     private String studentId;
-    private String studyPlanCourseId;
+    private String studyPlanId;
     private Integer totalEnrolledCourse;
     private Integer totalCompletedCourse;
     private Integer totalCreditsEarned;

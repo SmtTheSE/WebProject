@@ -23,8 +23,8 @@ public class StudentProgressSummary {
     private Student student;
 
     @ManyToOne
-    @JoinColumn(name = "study_plan_course_id", nullable = false)
-    private StudyPlanCourse studyPlanCourse;
+    @JoinColumn(name = "study_plan_id", nullable = false)
+    private StudyPlan studyPlan;
 
     @Column(name = "total_enrolled_course", nullable = false)
     private Integer totalEnrolledCourse = 0;
