@@ -98,7 +98,6 @@ const ProfilePage = () => {
       .then((res) => {
         const deadlines = res.data.map((item, idx) => ({
           id: idx,
-          // ✅ Prefer courseName if available
           name: item.courseName || item.course?.courseName || item.courseId,
           deadline: new Date(item.assignmentDeadline).toLocaleDateString("en-GB"),
         }));
@@ -108,18 +107,8 @@ const ProfilePage = () => {
   };
 
   const otherInfos = [
-    {
-      id: 1,
-      name: "Payment",
-      icon: payment,
-      data: generalInfo.paymentStatus,
-    },
-    {
-      id: 2,
-      name: "Total Credits",
-      icon: credit,
-      data: generalInfo.totalCredits,
-    },
+    { id: 1, name: "Payment", icon: payment, data: generalInfo.paymentStatus },
+    { id: 2, name: "Total Credits", icon: credit, data: generalInfo.totalCredits },
   ];
 
   const todayDay = new Date().toLocaleDateString("en-US", { weekday: "long" });
@@ -189,10 +178,9 @@ const ProfilePage = () => {
                   <div key={timeline.id} className="grid grid-cols-4 py-5 border-b border-border">
                     <div className="col-span-1">
                       <div className="flex items-center gap-2">
-                        <h1 className="text-font text-2xl">{timeline.day}</h1>
-                        {timeline.day === todayDay && (
-                          <span className="text-white bg-emerald-600 text-xs font-semibold px-2 py-1 rounded">Today</span>
-                        )}
+                        <h1 className="text-font text-2xl">
+                          {timeline.day === todayDay ? "Today" : timeline.day}
+                        </h1>
                       </div>
                       <p className="text-font-light">{timeline.date?.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
                     </div>
