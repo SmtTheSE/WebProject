@@ -1,21 +1,23 @@
 package com.SBS_StudentServing_System.service.academic;
 
-import com.SBS_StudentServing_System.dto.academic.ClassScheduleDto;
-import com.SBS_StudentServing_System.dto.academic.ClassTimelineDto;
-import com.SBS_StudentServing_System.dto.academic.CourseResultDto;
-import com.SBS_StudentServing_System.dto.academic.StudyPlanCourseDto;
+import com.SBS_StudentServing_System.dto.academic.*;
 import com.SBS_StudentServing_System.model.academic.*;
 import com.SBS_StudentServing_System.repository.academic.*;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @AllArgsConstructor
 @Service
 public class AcademicService {
+    @Autowired
+    public DailyAttendanceRepository dailyAttendanceRepository;
+
     @Autowired
     public StudentAcademicBackgroundRepository studentAcademicBackgroundRepo;
     @Autowired public StudentEnglishPlacementTestRepository studentEnglishPlacementTestRepo;
@@ -294,5 +296,39 @@ public class AcademicService {
     }
     public void deleteLecturerCourse(Long id) {
         lecturerCourseRepo.deleteById(id);
+    }
+
+    // Add to AcademicService.java
+    public List<DailyAttendanceDto> getDailyAttendanceByStudentId(String studentId) {
+        List<DailyAttendance> attendanceList = dailyAttendanceRepository.findByStudentStudentId(studentId);
+        return attendanceList.stream().map(attendance -> {
+            DailyAttendanceDto dto = new DailyAttendanceDto();
+            dto.setStudentId(attendance.getStudent().getStudentId());
+            dto.setClassScheduleId(attendance.getClassSchedule().getClassScheduleId());
+            dto.setCourseId(attendance.getClassSchedule().getStudyPlanCourse().getCourse().getCourseId());
+            dto.setCourseName(attendance.getClassSchedule().getStudyPlanCourse().getCourse().getCourseName());
+            dto.setAttendanceDate(attendance.getAttendanceDate());
+            dto.setStatus(attendance.getStatus());
+            dto.setCheckInTime(attendance.getCheckInTime());
+            dto.setCheckOutTime(attendance.getCheckOutTime());
+            dto.setNote(attendance.getNote());
+            return dto;
+        }).toList();
+    }
+
+    public Map<String, Object> getAttendanceSummaryByStudentId(String studentId) {
+        List<DailyAttendance> attendanceList = dailyAttendanceRepository.findByStudentStudentId(studentId);
+
+        Map<String, Object> summary = new HashMap<>();
+        long totalClasses = attendanceList.size();
+        long presentCount = attendanceList.stream().filter(a -> "Present".equals(a.getStatus())).count();
+
+        double attendanceRate = totalClasses > 0 ? (double) presentCount / totalClasses * 100 : 0.0;
+
+        summary.put("totalClasses", totalClasses);
+        summary.put("presentCount", presentCount);
+        summary.put("attendanceRate", Math.round(attendanceRate * 100.0) / 100.0);
+
+        return summary;
     }
 }

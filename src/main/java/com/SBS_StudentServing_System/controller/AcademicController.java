@@ -1,9 +1,6 @@
 package com.SBS_StudentServing_System.controller;
 
-import com.SBS_StudentServing_System.dto.academic.ClassScheduleDto;
-import com.SBS_StudentServing_System.dto.academic.ClassTimelineDto;
-import com.SBS_StudentServing_System.dto.academic.CourseResultDto;
-import com.SBS_StudentServing_System.dto.academic.StudyPlanCourseDto;
+import com.SBS_StudentServing_System.dto.academic.*;
 import com.SBS_StudentServing_System.model.academic.*;
 import com.SBS_StudentServing_System.service.academic.AcademicService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/academic")
@@ -377,5 +375,20 @@ public class AcademicController {
     public ResponseEntity<Void> deleteLecturerCourse(@PathVariable Long id) {
         academicService.deleteLecturerCourse(id);
         return ResponseEntity.noContent().build();
+    }
+
+
+
+
+    // --- DailyAttendance ---
+    @GetMapping("/daily-attendance/student/{studentId}")
+    public List<DailyAttendanceDto> getDailyAttendanceByStudentId(@PathVariable String studentId) {
+        return academicService.getDailyAttendanceByStudentId(studentId);
+    }
+
+    @GetMapping("/daily-attendance/summary/student/{studentId}")
+    public ResponseEntity<Map<String, Object>> getAttendanceSummaryByStudentId(@PathVariable String studentId) {
+        Map<String, Object> summary = academicService.getAttendanceSummaryByStudentId(studentId);
+        return ResponseEntity.ok(summary);
     }
 }

@@ -6,6 +6,7 @@ import ProfilePage from "../Pages/ProfilePage";
 import AcademicPage from "../Pages/AcademicPage";
 import Transcripts from "../Pages/Transcripts";
 import StudyPlan from "../Pages/StudyPlan";
+import Attendance from "../Pages/Attendance";
 
 const router = createBrowserRouter([
   {
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
       {
         path: "study-plan",
         element: <StudyPlan />
+      },
+      {
+        path: "attendence",
+        element: <Attendance />
       }
     ],
   },

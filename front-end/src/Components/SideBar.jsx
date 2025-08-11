@@ -1,14 +1,11 @@
 import { faUser } from "@fortawesome/free-regular-svg-icons";
 import {
   faAngleDown,
-  faCoins,
   faGraduationCap,
   faHome,
   faListCheck,
   faListOl,
-  faPlaneDeparture,
   faRoute,
-  faUserGraduate,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
@@ -49,7 +46,7 @@ const SideBar = () => {
           id: 3,
           name: "Attendances",
           icon: faListCheck,
-          link: "",
+          link: "attendence",
           isCurrent: false,
         },
       ],
@@ -64,6 +61,7 @@ const SideBar = () => {
     },
   ]);
 
+  // Handle top-level menu clicks
   const handleMenus = (id) => {
     setSideBarMenus((prevMenus) =>
       prevMenus.map((menu) =>
@@ -74,12 +72,20 @@ const SideBar = () => {
     );
   };
 
+  // Handle Academic child menu clicks without affecting top-level menus
   const academicMenuHandler = (id) => {
     setSideBarMenus((prevMenus) =>
-      prevMenus[1].children.map((menu) =>
-        menu.id === id
-          ? { ...menu, isCurrent: true }
-          : { ...menu, isCurrent: false }
+      prevMenus.map((menu) =>
+        menu.id === 2 // Academic menu
+          ? {
+              ...menu,
+              children: menu.children.map((child) =>
+                child.id === id
+                  ? { ...child, isCurrent: true }
+                  : { ...child, isCurrent: false }
+              ),
+            }
+          : menu
       )
     );
   };
@@ -129,8 +135,15 @@ const SideBar = () => {
                   <Link
                     key={child.id}
                     to={child.link}
-                    className="hover:text-iconic transition-colors duration-200 text-xl py-5"
-                    onClick={academicMenuHandler}
+                    className={`transition-colors duration-200 text-xl py-5 ${
+                      child.isCurrent
+                        ? "text-iconic font-bold"
+                        : "hover:text-iconic"
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation(); // prevent parent click
+                      academicMenuHandler(child.id);
+                    }}
                   >
                     {child.name}
                   </Link>
