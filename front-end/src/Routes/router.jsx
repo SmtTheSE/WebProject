@@ -3,10 +3,10 @@ import MainLayout from "../Components/MainLayout";
 import Login from "../Pages/Login";
 import ErrorPage from "../Pages/ErrorPage";
 import ProfilePage from "../Pages/ProfilePage";
-import AcademicPage from "../Pages/AcademicPage";
 import Transcripts from "../Pages/Transcripts";
 import StudyPlan from "../Pages/StudyPlan";
 import Attendance from "../Pages/Attendance";
+import HomePage from "../Pages/HomePage";
 
 const router = createBrowserRouter([
   {
@@ -16,7 +16,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <AcademicPage />,
+        element: <HomePage />,
       },
       {
         path: "profile",
