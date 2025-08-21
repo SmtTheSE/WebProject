@@ -36,7 +36,7 @@ public class DailyAttendance {
     @Column(name = "attendance_date", nullable = false)
     private LocalDate attendanceDate;
 
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 50)
     private String status; // 'Present', 'Absent', 'Absent with permission', 'Late'
 
     @Column(name = "check_in_time")

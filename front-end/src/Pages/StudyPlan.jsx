@@ -94,11 +94,17 @@ const StudyPlan = () => {
     }
   };
 
-  const semesterIdToYearSem = (semesterId) => {
-    if (!semesterId || !/^SEM\d{4}$/.test(semesterId)) return { year: 1, sem: 1 };
-    const year = parseInt(semesterId.charAt(3), 10) || 1;
-    const sem = parseInt(semesterId.charAt(6), 10) || 1;
-    return { year, sem };
+  const parseSemesterId = (semesterId) => {
+    // Handle the format: SEM_2024_1, SEM_2024_2, SEM_2024_3, etc.
+    if (!semesterId || !/^SEM_\d{4}_\d+$/.test(semesterId)) return null;
+
+    const parts = semesterId.split('_');
+    if (parts.length !== 3) return null;
+
+    const year = parseInt(parts[1], 10);
+    const semester = parseInt(parts[2], 10);
+
+    return { year, semester };
   };
 
   const fetchSubjects = async (studentId, token) => {
@@ -111,6 +117,35 @@ const StudyPlan = () => {
       const courses = Array.isArray(studyPlanCoursesRes.data)
         ? studyPlanCoursesRes.data
         : [];
+
+      // Get all unique semester IDs and sort them chronologically
+      const uniqueSemesters = [...new Set(courses.map(c => c.semesterId))]
+        .filter(id => parseSemesterId(id) !== null)
+        .sort((a, b) => {
+          const semA = parseSemesterId(a);
+          const semB = parseSemesterId(b);
+
+          if (semA.year !== semB.year) {
+            return semA.year - semB.year;
+          }
+          return semA.semester - semB.semester;
+        });
+
+      // Create mapping from semesterId to (year, semester) tuple
+      const semesterMapping = {};
+      const minYear = uniqueSemesters.length > 0
+        ? parseSemesterId(uniqueSemesters[0]).year
+        : 2024;
+
+      uniqueSemesters.forEach((semesterId) => {
+        const parsed = parseSemesterId(semesterId);
+        // Calculate academic year based on the minimum year in the dataset
+        const academicYear = parsed.year - minYear + 1;
+        semesterMapping[semesterId] = {
+          year: academicYear,
+          sem: parsed.semester
+        };
+      });
 
       const resultsRes = await axios.get(
         `http://localhost:8080/api/academic/course-results/student/${studentId}`,
@@ -137,14 +172,14 @@ const StudyPlan = () => {
       });
 
       const subjPlanArr = courses.map((course, idx) => {
-        const { year, sem } = semesterIdToYearSem(course.semesterId);
+        const mapping = semesterMapping[course.semesterId] || { year: 1, sem: 1 };
         const lecturerName = courseLecturerMap[course.courseName] || "-";
         return {
           id: idx + 1,
           subject: course.courseName,
           lecturer: lecturerName,
-          year,
-          sem,
+          year: mapping.year,
+          sem: mapping.sem,
           status: completedCourseIds.has(course.studyPlanCourseId) ? 1 : 0,
         };
       });
