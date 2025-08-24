@@ -34,8 +34,15 @@ const Login = () => {
       localStorage.setItem("role", role);
       localStorage.setItem("accountId", accountId);
 
-      //  Navigate after login
-      navigate("/");
+      // Navigate based on role
+      if (role === "admin") {
+        navigate("/admin/announcements");
+      } else if (role === "student") {
+        navigate("/");
+      } else {
+        // fallback if new roles appear later
+        navigate("/");
+      }
     } catch (err) {
       setError("Invalid email or password");
       console.error("Login error:", err);

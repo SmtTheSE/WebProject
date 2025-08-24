@@ -1,12 +1,8 @@
 package com.SBS_StudentServing_System.model.admin;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.SBS_StudentServing_System.model.account.LoginAccount;
+import jakarta.persistence.*;
 import lombok.*;
-
-import java.io.Serializable;
 
 @Entity
 @Data
@@ -21,8 +17,9 @@ public class Admin {
     @Column(name = "admin_id", length = 50)
     private String adminId;
 
-    @Column(name = "account_id", length = 50, unique = true)
-    private String accountId;
+    @OneToOne
+    @JoinColumn(name = "account_id", referencedColumnName = "account_id", unique = true)
+    private LoginAccount loginAccount;
 
     @Column(name = "first_name")
     private String firstName;
@@ -44,5 +41,4 @@ public class Admin {
 
     @Column(name = "department_id")
     private String departmentId;
-
 }

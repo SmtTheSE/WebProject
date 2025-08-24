@@ -3,7 +3,6 @@ package com.SBS_StudentServing_System.model.usefulinfo;
 import com.SBS_StudentServing_System.model.admin.Admin;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
 

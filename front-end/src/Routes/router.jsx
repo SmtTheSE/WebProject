@@ -7,6 +7,7 @@ import Transcripts from "../Pages/Transcripts";
 import StudyPlan from "../Pages/StudyPlan";
 import Attendance from "../Pages/Attendance";
 import HomePage from "../Pages/HomePage";
+import AdminAnnouncementManager from "../Pages/AdminAnnouncementManager";
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,17 @@ const router = createBrowserRouter([
   {
     path: "login",
     element: <Login />,
+  },
+  // Admin Routes
+  {
+    path: "admin",
+    children: [
+      {
+        path: "announcements",
+        element: <AdminAnnouncementManager />,
+      },
+
+    ],
   },
 ]);
 

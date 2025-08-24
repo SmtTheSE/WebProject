@@ -38,6 +38,35 @@ const ProfilePage = () => {
       .catch(() => navigate("/login"));
   }, []);
 
+  const getWeekRange = (date) => {
+    const currentDate = new Date(date);
+    const dayOfWeek = currentDate.getDay(); // 0 (Sunday) to 6 (Saturday)
+    const startDate = new Date(currentDate);
+
+    // Calculate Monday as the first day of the week
+    // Adjust for Sunday (0) to be considered as end of previous week
+    const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    startDate.setDate(currentDate.getDate() + diffToMonday);
+
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6); // Saturday
+
+    return { startDate, endDate };
+  };
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+  };
+
+  const getDayOfWeek = (date) => {
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    return days[date.getDay()];
+  };
+
   const fetchGeneralInfo = (studentId) => {
     const token = localStorage.getItem("token");
     const headers = { Authorization: `Bearer ${token}` };
@@ -58,23 +87,42 @@ const ProfilePage = () => {
     const token = localStorage.getItem("token");
     const headers = { Authorization: `Bearer ${token}` };
 
+    // Get current week range (Monday to Saturday)
+    const { startDate, endDate } = getWeekRange(new Date());
+
     axios.get(`http://localhost:8080/api/academic/class-timelines/${studentId}`, { headers })
       .then((res) => {
-        const grouped = res.data.reduce((acc, curr) => {
-          if (!acc[curr.dayOfWeek]) acc[curr.dayOfWeek] = [];
-          acc[curr.dayOfWeek].push(curr);
+        // Filter classes within the current week
+        const classesInWeek = res.data.filter(classItem => {
+          const classDate = new Date(classItem.classDate);
+          return classDate >= startDate && classDate <= endDate;
+        });
+
+        // Group by day of week
+        const grouped = classesInWeek.reduce((acc, curr) => {
+          const classDate = new Date(curr.classDate);
+          const dayOfWeek = getDayOfWeek(classDate);
+
+          if (!acc[dayOfWeek]) acc[dayOfWeek] = [];
+          acc[dayOfWeek].push(curr);
           return acc;
         }, {});
 
-        const weekdaysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        // Create timeline for the current week (Monday to Saturday)
+        const weekdaysOrder = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
         const formatted = weekdaysOrder.map((day, index) => {
           const subjects = grouped[day] || [];
           const sortedSubjects = subjects.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+          // Find the actual date for this day in the current week
+          const dayDate = new Date(startDate);
+          dayDate.setDate(startDate.getDate() + index);
+
           return {
             id: index,
             day,
-            date: sortedSubjects[0] ? new Date(sortedSubjects[0].classDate) : null,
+            date: dayDate,
             subjects: sortedSubjects.map((s, i) => ({
               id: i,
               subject: s.courseName,
@@ -83,7 +131,7 @@ const ProfilePage = () => {
               endTime: s.endTime,
             })),
           };
-        }).filter(day => day.subjects.length > 0);
+        });
 
         setClassTimeline(formatted);
       })
@@ -111,7 +159,10 @@ const ProfilePage = () => {
     { id: 2, name: "Total Credits", icon: credit, data: generalInfo.totalCredits },
   ];
 
-  const todayDay = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  const today = new Date();
+  const todayFormatted = formatDate(today);
+  const { startDate, endDate } = getWeekRange(today);
+  const weekRangeText = `${formatDate(startDate)} - ${formatDate(endDate)}`;
 
   return (
     <section>
@@ -172,17 +223,20 @@ const ProfilePage = () => {
 
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white p-5 col-span-2 row-span-2 rounded-md">
-              <h1 className="uppercase text-gray-500 text-xl border-b border-font-light pb-5">Class Timeline</h1>
+              <div className="flex justify-between items-center uppercase text-gray-500 text-xl border-b border-font-light pb-5">
+                <h1>Class Timeline</h1>
+                <p className="text-sm normal-case text-gray-500">{weekRangeText}</p>
+              </div>
               <div>
                 {classTimeline.map((timeline) => (
                   <div key={timeline.id} className="grid grid-cols-4 py-5 border-b border-border">
                     <div className="col-span-1">
                       <div className="flex items-center gap-2">
                         <h1 className="text-font text-2xl">
-                          {timeline.day === todayDay ? "Today" : timeline.day}
+                          {formatDate(timeline.date) === todayFormatted ? "Today" : timeline.day}
                         </h1>
                       </div>
-                      <p className="text-font-light">{timeline.date?.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                      <p className="text-font-light">{formatDate(timeline.date)}</p>
                     </div>
                     <div className="col-span-3">
                       {!timeline.subjects?.length ? (

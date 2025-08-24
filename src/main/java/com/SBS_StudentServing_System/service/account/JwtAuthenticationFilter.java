@@ -16,7 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -29,8 +28,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        final String authHeader = request.getHeader("Authorization");
 
+        String path = request.getRequestURI();
+
+        if (path.startsWith("/api/announcements")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        final String authHeader = request.getHeader("Authorization");
         String token = null;
         String accountId = null;
 
@@ -38,20 +44,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             token = authHeader.substring(7);
             if (jwtUtil.validateToken(token)) {
                 accountId = jwtUtil.extractAccountId(token);
-                Optional<Student> studentOpt = studentRepository.findByLoginAccount_AccountId(accountId);
-                if (studentOpt.isPresent() && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    LoginAccount loginAccount = studentOpt.get().getLoginAccount();
 
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    loginAccount.getAccountId(),
-                                    null,
-                                    Collections.emptyList()
-                            );
+                studentRepository.findByLoginAccount_AccountId(accountId).ifPresent(student -> {
+                    if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                        LoginAccount loginAccount = student.getLoginAccount();
 
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(
+                                        loginAccount.getAccountId(),
+                                        null,
+                                        Collections.emptyList()
+                                );
+
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
+                });
             }
         }
 

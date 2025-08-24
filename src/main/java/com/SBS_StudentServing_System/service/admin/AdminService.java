@@ -15,7 +15,7 @@ public class AdminService {
     }
 
     public Optional<Admin> getAdminByAccountId(String accountId) {
-        return Optional.ofNullable(adminRepository.findByAccountId(accountId));
+        return Optional.ofNullable(adminRepository.findByLoginAccount_AccountId(accountId));
     }
 
     public Admin createAdmin(Admin admin) {
